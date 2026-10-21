@@ -1,0 +1,62 @@
+:root {
+  color-scheme: light;
+  --bg: #eef2ed;
+  --surface: #ffffff;
+  --ink: #203024;
+  --muted: #647068;
+  --green: #3f6048;
+  --green-dark: #294433;
+  --line: #d7dfd7;
+  --focus: #9e6f22;
+  font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); }
+button, a { font: inherit; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+.shell { width: min(100%, 720px); margin: 0 auto; padding: 22px 16px 44px; }
+.head { padding: 8px 2px 18px; }
+.head h1 { margin: 0; color: var(--green-dark); font-size: 30px; letter-spacing: 0; }
+.sub { margin: 5px 0 0; color: var(--muted); font-size: 14px; }
+
+.card, .person {
+  margin-bottom: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 4px 16px rgba(40, 61, 47, .07);
+}
+.note { margin: 0 0 15px; line-height: 1.7; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.btn {
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid var(--green);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--green-dark);
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn.primary { width: 100%; background: var(--green-dark); color: #fff; }
+.btn:active { transform: translateY(1px); }
+.link { color: var(--green); font-weight: 700; }
+.status { min-height: 24px; margin: 12px 2px 0; color: var(--muted); line-height: 1.6; }
+.status.error { color: #a3312b; }
+.empty { color: var(--muted); text-align: center; }
+
+.person-name { font-size: 18px; font-weight: 800; }
+.person-meta { margin-top: 4px; color: var(--muted); font-size: 13px; }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.tag { padding: 3px 9px; border-radius: 999px; background: #e9f0e9; color: var(--green-dark); font-size: 12px; font-weight: 700; }
+
+@media (max-width: 440px) {
+  .shell { padding: 16px 12px 32px; }
+  .actions { grid-template-columns: 1fr; }
+  .row { align-items: flex-start; flex-direction: column; }
+}

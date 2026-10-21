@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>安麗日記</title>
+    <meta name="application-name" content="安麗日記">
+    <meta name="apple-mobile-web-app-title" content="安麗日記">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#566b57">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="head">
+        <h1>安麗日記</h1>
+        <p class="sub" id="who">尚未登入</p>
+      </header>
+
+      <section class="card" id="startCard">
+        <p class="note">
+          用你自己的 Google 帳號登入。資料會存在
+          <b>你自己的雲端硬碟</b>裡，別人看不到。
+        </p>
+        <button class="btn primary" id="signInBtn">用 Google 登入</button>
+      </section>
+
+      <section class="card" id="sheetCard" hidden>
+        <div class="row">
+          <span id="sheetState">尚未建立資料表</span>
+          <a class="link" id="sheetLink" target="_blank" rel="noopener" hidden>開啟試算表</a>
+        </div>
+        <div class="actions">
+          <button class="btn" id="createBtn">建立我的資料表</button>
+          <button class="btn" id="reloadBtn" hidden>重新讀取</button>
+          <button class="btn" id="addBtn" hidden>加一筆測試資料</button>
+        </div>
+      </section>
+
+      <section id="listBox"></section>
+
+      <p class="status" id="status"></p>
+    </main>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
