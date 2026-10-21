@@ -15,7 +15,6 @@ const CLIENT_ID = '806333112280-hm6cdm0fmmhftn7bpnh86nkpkckv9bli.apps.googleuser
 
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const SHEET_NAME = '人員總表';
-const FILE_TITLE = '安麗日記資料';
 
 // 欄位順序跟 GAS 版的 PERSON_COLUMNS 一模一樣。
 // 現在只是先讀名單，但先把順序定對，之後要接真資料才不用重來。
@@ -24,6 +23,33 @@ const COLUMNS = [
   '推薦人姓名', '推薦人系統編號', '加入日期', '地址', '備註',
   '建立時間', '更新時間', '層級', '個人分類', '緯度', '經度', '定位狀態'
 ];
+
+// 分頁名稱與欄位順序完全沿用正式安麗日記。欄位只能加在最後，
+// 不可插進中間，否則既有程式用欄位位置讀資料時會整排錯位。
+const SHEET_SCHEMAS = [
+  ['人員總表', COLUMNS],
+  ['行程', ['行程編號', '日期', '時段', '要做什麼', '對象系統編號', '對象姓名', '建立時間', '更新時間', '備註', '完成狀態']],
+  ['活動特惠表', ['活動編號', '類型', '名稱', '開始日期', '結束日期', '說明', '建立時間', '更新時間']],
+  ['每日叮嚀卡', ['日期', '叮嚀卡內容', '更新時間']],
+  ['邀約紀錄表', ['邀約編號', '活動編號', '活動名稱', '人員系統編號', '姓名', '結果', '備註', '建立時間', '更新時間']],
+  ['人員關係表', ['關係編號', '人員A系統編號', '人員A姓名', '人員B系統編號', '人員B姓名', '關係類型', '備註', '建立時間', '更新時間']],
+  ['客戶背景表', ['人員系統編號', '姓名', '家庭背景', '工作 / 經濟狀況', '健康 / 生活狀況', '關係 / 人脈狀況', '需求與痛點', '重要提醒', '建立時間', '更新時間']],
+  ['跟進紀錄表', ['紀錄編號', '人員系統編號', '姓名', '跟進日期', '跟進方式', '跟進內容', '結果狀態', '下次跟進日期', '下次跟進時間', 'Google日曆事件ID', '建立時間', '更新時間', '下回要做什麼', '下回要做狀態']],
+  ['長客訂購紀錄', ['姓名', '推薦人', '產品', '期數', '扣款日', '建立日期']],
+  ['長客產品價格表', ['產品名稱', '單價', '類別']],
+  ['客戶名單', ['代數', '直銷商編號', '姓名', '推薦人', '匯入狀態', '系統訊息', '匯入時間']],
+  ['系統設定表', ['設定編號', '設定類型', '名稱', '啟用', '排序', '建立時間', '更新時間']],
+  ['淨水器圖片表', ['圖片編號', '淨水器編號', '擁有人姓名', '地址', '檔案名稱', 'Drive檔案ID', '圖片連結', '檔案類型', '建立時間']],
+  ['淨水器紀錄表', ['淨水器編號', '擁有人系統編號', '擁有人姓名', '產品型號', '地址', '本次更換日期', '下次更換日期', '狀態', '備註', '建立時間', '更新時間', '緯度', '經度', '定位狀態']]
+];
+
+const DEFAULT_SETTINGS = {
+  '身分': ['未加入', '直銷商', '生活會員'],
+  '狀態': ['觀望中', '經營中', '暫停', '流失', '協作中', '可協助', '暫停協助'],
+  '分類': ['陌建', '重點跟進', '家人', '教室朋友'],
+  '淨水器產品': ['eSpring', 'eSpring Pro'],
+  '關係類型': ['朋友', '家人', '客戶介紹', '合作夥伴', '同事', '其他', '教室夥伴', '協助者', '共同活動', '介紹協助']
+};
 
 const STORE_KEY = 'amway-diary-spreadsheet-id';
 
@@ -95,36 +121,88 @@ function signIn() {
 /* ---------- 試算表 ---------- */
 
 async function createSheet() {
-  say('正在建立試算表...');
+  const title = String($('diaryName').value || '').trim();
+  if (!title) {
+    say('請先輸入安麗日記名稱。', true);
+    $('diaryName').focus();
+    return;
+  }
+
+  say('正在建立完整安麗日記...');
   const created = await api('https://sheets.googleapis.com/v4/spreadsheets', {
     method: 'POST',
     body: JSON.stringify({
-      properties: { title: FILE_TITLE },
-      sheets: [{ properties: { title: SHEET_NAME } }]
+      properties: { title: title },
+      sheets: SHEET_SCHEMAS.map((schema, index) => ({
+        properties: {
+          title: schema[0],
+          index: index,
+          gridProperties: { frozenRowCount: 1, rowCount: 1000, columnCount: 26 }
+        }
+      }))
     })
   });
 
   spreadsheetId = created.spreadsheetId;
   localStorage.setItem(STORE_KEY, spreadsheetId);
 
-  // 先寫標題列。欄位順序就是之後真正要用的那一套。
-  await api(
-    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}` +
-    `/values/${encodeURIComponent(SHEET_NAME)}!A1?valueInputOption=RAW`,
-    { method: 'PUT', body: JSON.stringify({ values: [COLUMNS] }) }
+  localStorage.setItem(STORE_KEY + '-title', title);
+
+  const createdAt = new Date().toISOString();
+  let settingIndex = 1;
+  const settingRows = Object.entries(DEFAULT_SETTINGS).flatMap(([type, names]) =>
+    names.map(name => {
+      const row = [
+        `S${String(settingIndex).padStart(4, '0')}`,
+        type,
+        name,
+        '是',
+        settingIndex,
+        createdAt,
+        createdAt
+      ];
+      settingIndex += 1;
+      return row;
+    })
   );
 
-  await showSheet();
+  // 一次寫入 14 個分頁的標題列與必要預設選項。
+  await api(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}` +
+    `/values:batchUpdate`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        valueInputOption: 'RAW',
+        data: [
+          ...SHEET_SCHEMAS.map(schema => ({
+            range: `'${schema[0].replace(/'/g, "''")}'!A1`,
+            majorDimension: 'ROWS',
+            values: [schema[1]]
+          })),
+          {
+            range: "'系統設定表'!A2",
+            majorDimension: 'ROWS',
+            values: settingRows
+          }
+        ]
+      })
+    }
+  );
+
+  await showSheet(title);
   await loadPeople();
-  say('建好了。這張試算表在你自己的雲端硬碟裡。');
+  say('建好了：14 個分頁與欄位都已建立在你自己的雲端硬碟。');
 }
 
-async function showSheet() {
-  $('sheetState').textContent = '資料表：' + FILE_TITLE;
+async function showSheet(title) {
+  const savedTitle = title || localStorage.getItem(STORE_KEY + '-title') || '安麗日記';
+  $('sheetState').textContent = '資料表：' + savedTitle;
   const link = $('sheetLink');
   link.href = 'https://docs.google.com/spreadsheets/d/' + spreadsheetId + '/edit';
   link.hidden = false;
   $('createBtn').hidden = true;
+  $('nameField').hidden = true;
   $('reloadBtn').hidden = false;
   $('addBtn').hidden = false;
 }

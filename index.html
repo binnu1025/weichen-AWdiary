@@ -12,7 +12,7 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
     <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-    <link rel="stylesheet" href="./styles.css?v=20261022-2">
+    <link rel="stylesheet" href="./styles.css?v=20261022-3">
   </head>
   <body>
     <main class="shell">
@@ -34,8 +34,12 @@
           <span id="sheetState">尚未建立資料表</span>
           <a class="link" id="sheetLink" target="_blank" rel="noopener" hidden>開啟試算表</a>
         </div>
+        <label class="field" id="nameField">
+          <span>安麗日記名稱</span>
+          <input id="diaryName" type="text" maxlength="60" value="我的安麗日記" placeholder="例如：緯宸安麗日記">
+        </label>
         <div class="actions">
-          <button class="btn" id="createBtn">建立我的資料表</button>
+          <button class="btn primary" id="createBtn">建立全新的安麗日記</button>
           <button class="btn" id="reloadBtn" hidden>重新讀取</button>
           <button class="btn" id="addBtn" hidden>加一筆測試資料</button>
         </div>
@@ -47,6 +51,6 @@
     </main>
 
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="./app.js?v=20261022-2"></script>
+    <script src="./app.js?v=20261022-3"></script>
   </body>
 </html>
