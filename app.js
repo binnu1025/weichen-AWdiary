@@ -11,7 +11,7 @@
 
 // ⚠ 這裡要填你自己的 OAuth Client ID（Web application 類型）。
 // Client ID 是公開資訊，不是祕密，寫在前端是正常的。
-const CLIENT_ID = '請填入你的 CLIENT_ID.apps.googleusercontent.com';
+const CLIENT_ID = '806333112280-hm6cdm0fmmhftn7bpnh86nkpkckv9bli.apps.googleusercontent.com';
 
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const SHEET_NAME = '人員總表';
