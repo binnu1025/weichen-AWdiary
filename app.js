@@ -255,17 +255,64 @@ function escapeHtml(value) {
   })[ch]);
 }
 
+function askPersonName() {
+  const dialog = $('personDialog');
+  const form = $('personForm');
+  const input = $('personName');
+  const error = $('personNameError');
+
+  input.value = '';
+  error.hidden = true;
+  dialog.showModal();
+  requestAnimationFrame(() => input.focus());
+
+  return new Promise(resolve => {
+    const finish = value => {
+      form.removeEventListener('submit', submit);
+      dialog.removeEventListener('cancel', cancel);
+      $('personCancelBtn').removeEventListener('click', cancel);
+      $('personCloseBtn').removeEventListener('click', cancel);
+      dialog.removeEventListener('click', backdrop);
+      if (dialog.open) dialog.close();
+      resolve(value);
+    };
+    const submit = event => {
+      event.preventDefault();
+      const name = input.value.trim();
+      if (!name) {
+        error.hidden = false;
+        input.focus();
+        return;
+      }
+      finish(name);
+    };
+    const cancel = event => {
+      event.preventDefault();
+      finish('');
+    };
+    const backdrop = event => {
+      if (event.target === dialog) finish('');
+    };
+
+    form.addEventListener('submit', submit);
+    dialog.addEventListener('cancel', cancel);
+    $('personCancelBtn').addEventListener('click', cancel);
+    $('personCloseBtn').addEventListener('click', cancel);
+    dialog.addEventListener('click', backdrop);
+  });
+}
+
 /* ---------- 加一筆（確認寫得進去） ---------- */
 
 async function addSample() {
-  const name = prompt('姓名？');
-  if (!name || !name.trim()) return;
+  const name = await askPersonName();
+  if (!name) return;
 
   say('正在寫入...');
   const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
   const row = new Array(COLUMNS.length).fill('');
   row[0] = 'P' + String(Date.now()).slice(-6);   // 暫時的編號，之後要換成跟 GAS 版一樣的流水號
-  row[2] = name.trim();
+  row[2] = name;
   row[4] = '未加入';
   row[11] = now;
   row[12] = now;

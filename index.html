@@ -12,7 +12,7 @@
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
     <link rel="apple-touch-icon" href="./apple-touch-icon.png">
-    <link rel="stylesheet" href="./styles.css?v=20261022-3">
+    <link rel="stylesheet" href="./styles.css?v=20261022-4">
   </head>
   <body>
     <main class="shell">
@@ -50,7 +50,28 @@
       <p class="status" id="status"></p>
     </main>
 
+    <dialog class="modal" id="personDialog">
+      <form class="modal-panel" id="personForm" method="dialog">
+        <div class="modal-head">
+          <div>
+            <p class="modal-kicker">新增人員</p>
+            <h2>輸入姓名</h2>
+          </div>
+          <button class="icon-btn" id="personCloseBtn" type="button" aria-label="關閉">&times;</button>
+        </div>
+        <label class="field modal-field">
+          <span>姓名</span>
+          <input id="personName" type="text" maxlength="40" autocomplete="name" placeholder="請輸入姓名">
+        </label>
+        <p class="field-error" id="personNameError" hidden>請輸入姓名</p>
+        <div class="modal-actions">
+          <button class="btn" id="personCancelBtn" type="button">取消</button>
+          <button class="btn primary" type="submit">確認新增</button>
+        </div>
+      </form>
+    </dialog>
+
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="./app.js?v=20261022-3"></script>
+    <script src="./app.js?v=20261022-4"></script>
   </body>
 </html>
