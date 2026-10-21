@@ -56,8 +56,22 @@ const STORE_KEY = 'amway-diary-spreadsheet-id';
 let accessToken = '';
 let spreadsheetId = localStorage.getItem(STORE_KEY) || '';
 let tokenClient = null;
+let isRenaming = false;
 
 const $ = id => document.getElementById(id);
+
+function diaryTitle(value) {
+  const name = String(value || '').trim();
+  if (!name) return '';
+  if (name.endsWith('安麗日記')) return name;
+  return name + '的安麗日記';
+}
+
+function setAppTitle(title) {
+  const text = title || '安麗日記';
+  $('appTitle').textContent = text;
+  document.title = text;
+}
 
 function say(text, isError) {
   const box = $('status');
@@ -121,9 +135,9 @@ function signIn() {
 /* ---------- 試算表 ---------- */
 
 async function createSheet() {
-  const title = String($('diaryName').value || '').trim();
+  const title = diaryTitle($('diaryName').value);
   if (!title) {
-    say('請先輸入安麗日記名稱。', true);
+    say('請先輸入這是誰的安麗日記。', true);
     $('diaryName').focus();
     return;
   }
@@ -197,14 +211,48 @@ async function createSheet() {
 
 async function showSheet(title) {
   const savedTitle = title || localStorage.getItem(STORE_KEY + '-title') || '安麗日記';
+  setAppTitle(savedTitle);
   $('sheetState').textContent = '資料表：' + savedTitle;
   const link = $('sheetLink');
   link.href = 'https://docs.google.com/spreadsheets/d/' + spreadsheetId + '/edit';
   link.hidden = false;
   $('createBtn').hidden = true;
   $('nameField').hidden = true;
+  $('renameBtn').hidden = false;
   $('reloadBtn').hidden = false;
   $('addBtn').hidden = false;
+}
+
+async function renameDiary() {
+  if (!isRenaming) {
+    const currentTitle = localStorage.getItem(STORE_KEY + '-title') || '';
+    $('diaryName').value = currentTitle.replace(/的?安麗日記$/, '');
+    $('nameField').hidden = false;
+    $('renameBtn').textContent = '儲存日記名稱';
+    isRenaming = true;
+    $('diaryName').focus();
+    say('輸入姓名或稱呼後，按「儲存日記名稱」。');
+    return;
+  }
+
+  const title = diaryTitle($('diaryName').value);
+  if (!title) {
+    say('請輸入這是誰的安麗日記。', true);
+    return;
+  }
+  await api(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+    method: 'POST',
+    body: JSON.stringify({ requests: [{ updateSpreadsheetProperties: {
+      properties: { title: title }, fields: 'title'
+    } }] })
+  });
+  localStorage.setItem(STORE_KEY + '-title', title);
+  setAppTitle(title);
+  $('sheetState').textContent = '資料表：' + title;
+  $('nameField').hidden = true;
+  $('renameBtn').textContent = '修改日記名稱';
+  isRenaming = false;
+  say('日記名稱已更新。');
 }
 
 /* ---------- 讀名單 ---------- */
@@ -334,5 +382,8 @@ function guard(fn) {
 
 $('signInBtn').addEventListener('click', signIn);
 $('createBtn').addEventListener('click', guard(createSheet));
+$('renameBtn').addEventListener('click', guard(renameDiary));
 $('reloadBtn').addEventListener('click', guard(loadPeople));
 $('addBtn').addEventListener('click', guard(addSample));
+
+setAppTitle(localStorage.getItem(STORE_KEY + '-title'));
